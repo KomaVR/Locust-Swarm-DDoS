@@ -1,0 +1,29 @@
+name: Run Discord Bot
+on:
+  schedule:
+    - cron: "*/5 * * * *"
+  workflow_dispatch:
+jobs:
+  start-bot:
+    runs-on: ubuntu-latest
+    concurrency:
+      group: run-discord-bot
+      cancel-in-progress: true
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+      - name: Launch Discord Bot
+        env:
+          DISCORD_TOKEN: ${{ secrets.DISCORD_TOKEN }}
+          PAT_TOKEN:     ${{ secrets.PAT_TOKEN }}
+          REPO_OWNER:    ${{ secrets.REPO_OWNER }}
+          REPO_NAME:     ${{ secrets.REPO_NAME }}
+          WORKFLOW_FILE: load-test.yml
+          REF:           main
+        run: python bot.py

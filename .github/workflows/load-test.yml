@@ -1,0 +1,61 @@
+name: Distributed Locust Load Test
+
+on:
+  workflow_dispatch:
+    inputs:
+      HOST:
+        description: 'Target base URL for Locust (e.g. https://example.com)'
+        required: true
+      USERS:
+        description: 'Total virtual users'
+        required: true
+      SPAWN_RATE:
+        description: 'Users spawned per second'
+        required: true
+      WORKERS:
+        description: 'Number of worker processes'
+        required: true
+      RUN_TIME:
+        description: 'Duration (e.g. 5m, 1h)'
+        required: true
+
+jobs:
+  locust-swarm:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Install Locust
+        run: pip install locust
+
+      - name: Launch master + workers
+        env:
+          HOST: ${{ github.event.inputs.HOST }}
+          USERS: ${{ github.event.inputs.USERS }}
+          SPAWN_RATE: ${{ github.event.inputs.SPAWN_RATE }}
+          WORKERS: ${{ github.event.inputs.WORKERS }}
+          RUN_TIME: ${{ github.event.inputs.RUN_TIME }}
+        run: |
+          TOTAL=$((WORKERS))
+          locust -f stress_test.py \
+            --master \
+            --expect-workers "${TOTAL}" \
+            --headless \
+            --host "${HOST}" \
+            --users "${USERS}" \
+            --spawn-rate "${SPAWN_RATE}" \
+            --run-time "${RUN_TIME}" &
+          MASTER_PID=$!
+          sleep 10
+          for i in $(seq 1 "${WORKERS}"); do
+            locust -f stress_test.py --worker --master-host 127.0.0.1 &
+          done
+          wait $MASTER_PID
