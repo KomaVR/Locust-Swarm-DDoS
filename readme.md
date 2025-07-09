@@ -49,12 +49,11 @@ Once the bot is running, use the following slash command in Discord:
 ```
 
 /stress
-url: [https://target.site](https://target.site)
+url: [https://target.site]
 users: 200
-spawn\_rate: 20
+spawn_rate: 20
 workers: 5
-run\_time: 2m
-
+run_time: 2m
 ```
 
 This will trigger:
@@ -86,7 +85,7 @@ To run Locust locally:
 
 ```
 
-locust -f stress\_test.py
+locust -f stress_test.py
 
 ```
 
